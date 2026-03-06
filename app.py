@@ -7,19 +7,25 @@ app = Flask(__name__)
 CORS(app)
 
 # Load databases from CSV
-def load_csv(filename):
-    data = {}
-    with open(filename, 'r') as f:
-        reader = csv.DictReader(f) 
-        for row in reader:
-            data[row['food_name'].lower()] = row
-    return data
-
-food_macros = load_csv('food_macros.csv')
-food_gl = load_csv('food_gl_values.csv')
+food_macros = {}
+food_gl = {}
 food_swaps_raw = []
+
+# Load food macros
+with open('food_macros.csv', 'r') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        food_macros[row['food_name'].lower()] = row
+
+# Load GL values
+with open('food_gl_values.csv', 'r') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        food_gl[row['food_name'].lower()] = row
+
+# Load swaps
 with open('food_swaps.csv', 'r') as f:
-    reader = csv.DictReader(f) 
+    reader = csv.DictReader(f)
     for row in reader:
         food_swaps_raw.append(row)
 
@@ -31,48 +37,48 @@ def calculate_gl(carbs, protein, fat, fiber):
 # Search food function
 def search_food(food_name, amount_grams):
     food_lower = food_name.lower().strip()
-    match = food_macros[food_macros['food_name'].str.lower() == food_lower]
     
-    if match.empty:
+    if food_lower not in food_macros:
         return None
     
-    per_100g = match.iloc[0]
+    per_100g = food_macros[food_lower]
     multiplier = amount_grams / 100
     
     return {
         'name': str(per_100g['food_name']),
         'amount_g': float(amount_grams),
-        'carbs': float(round(per_100g['carbs_per_100g'] * multiplier, 1)),
-        'protein': float(round(per_100g['protein_per_100g'] * multiplier, 1)),
-        'fat': float(round(per_100g['fat_per_100g'] * multiplier, 1)),
-        'fiber': float(round(per_100g['fiber_per_100g'] * multiplier, 1))
+        'carbs': float(per_100g['carbs_per_100g']) * multiplier,
+        'protein': float(per_100g['protein_per_100g']) * multiplier,
+        'fat': float(per_100g['fat_per_100g']) * multiplier,
+        'fiber': float(per_100g['fiber_per_100g']) * multiplier
     }
 
 # Find alternatives function
 def find_alternatives(food_name):
     food_lower = food_name.lower().strip()
-    swaps = food_swaps[food_swaps['original_food'].str.lower() == food_lower]
     
-    if swaps.empty:
+    # Find swaps for this food
+    swaps = [s for s in food_swaps_raw if s['original_food'].lower() == food_lower]
+    
+    if not swaps:
         return []
     
-    original_gl_row = food_gl[food_gl['food_name'].str.lower() == food_lower]
-    if original_gl_row.empty:
+    # Get original food GL
+    if food_lower not in food_gl:
         return []
     
-    original_gl = float(original_gl_row.iloc[0]['sydney_gl'])
+    original_gl = float(food_gl[food_lower]['sydney_gl'])
     
     alternatives = []
-    for _, swap in swaps.iterrows():
-        alt_name = swap['alternative_food']
-        alt_gl_row = food_gl[food_gl['food_name'].str.lower() == alt_name.lower()]
+    for swap in swaps:
+        alt_name = swap['alternative_food'].lower()
         
-        if not alt_gl_row.empty:
-            alt_gl = float(alt_gl_row.iloc[0]['sydney_gl'])
+        if alt_name in food_gl:
+            alt_gl = float(food_gl[alt_name]['sydney_gl'])
             improvement = round(((original_gl - alt_gl) / original_gl) * 100, 1)
             
             alternatives.append({
-                'name': str(alt_name),
+                'name': str(swap['alternative_food']),
                 'sydney_gl': float(alt_gl),
                 'improvement_percent': float(improvement)
             })
@@ -119,9 +125,9 @@ def analyze_meal_api():
         
         suggestions = []
         for food in foods_in_meal:
-            food_gl = calculate_gl(food['carbs'], food['protein'], food['fat'], food['fiber'])
+            food_gl_val = calculate_gl(food['carbs'], food['protein'], food['fat'], food['fiber'])
             
-            if food_gl > 10:
+            if food_gl_val > 10:
                 alternatives = find_alternatives(food['name'])
                 
                 if alternatives:
