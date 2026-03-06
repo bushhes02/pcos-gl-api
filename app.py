@@ -1,15 +1,27 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import pandas as pd
+import csv
 
 # Create Flask app
 app = Flask(__name__)
 CORS(app)
 
-# Load databases
-food_macros = pd.read_csv('food_macros.csv')
-food_gl = pd.read_csv('food_gl_values.csv')
-food_swaps = pd.read_csv('food_swaps.csv')
+# Load databases from CSV
+def load_csv(filename):
+    data = {}
+    with open(filename, 'r') as f:
+        reader = csv.DictReader(f, delimiter='\t')
+        for row in reader:
+            data[row['food_name'].lower()] = row
+    return data
+
+food_macros = load_csv('food_macros.csv')
+food_gl = load_csv('food_gl_values.csv')
+food_swaps_raw = []
+with open('food_swaps.csv', 'r') as f:
+    reader = csv.DictReader(f, delimiter='\t')
+    for row in reader:
+        food_swaps_raw.append(row)
 
 # GL calculation function
 def calculate_gl(carbs, protein, fat, fiber):
