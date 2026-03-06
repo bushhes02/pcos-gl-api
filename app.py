@@ -10,7 +10,7 @@ CORS(app)
 def load_csv(filename):
     data = {}
     with open(filename, 'r') as f:
-        reader = csv.DictReader(f, delimiter='\t')
+        reader = csv.DictReader(f) 
         for row in reader:
             data[row['food_name'].lower()] = row
     return data
@@ -19,7 +19,7 @@ food_macros = load_csv('food_macros.csv')
 food_gl = load_csv('food_gl_values.csv')
 food_swaps_raw = []
 with open('food_swaps.csv', 'r') as f:
-    reader = csv.DictReader(f, delimiter='\t')
+    reader = csv.DictReader(f) 
     for row in reader:
         food_swaps_raw.append(row)
 
