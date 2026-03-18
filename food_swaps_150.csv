@@ -1,0 +1,80 @@
+original_food,alternative_food
+white rice cooked,brown rice cooked
+white rice cooked,quinoa cooked
+white rice cooked,wild rice cooked
+white rice cooked,cauliflower cooked
+basmati rice cooked,brown rice cooked
+basmati rice cooked,quinoa cooked
+jasmine rice cooked,brown rice cooked
+jasmine rice cooked,red rice cooked
+white pasta cooked,whole wheat pasta cooked
+white pasta cooked,quinoa cooked
+white pasta cooked,chickpeas cooked
+white pasta cooked,lentils cooked
+white bread,whole wheat bread
+white bread,rye bread
+white bread,sourdough bread
+white bread,oats cooked
+pita bread white,whole wheat bread
+pita bread white,tortilla flour
+bagel plain,whole wheat bread
+bagel plain,oats cooked
+english muffin,whole wheat bread
+naan bread,whole wheat bread
+naan bread,rye bread
+white potato baked,sweet potato baked
+white potato baked,quinoa cooked
+french fries,sweet potato baked
+mashed potato,sweet potato baked
+mashed potato,cauliflower cooked
+potato chips,almonds
+couscous cooked,quinoa cooked
+couscous cooked,bulgur cooked
+cornmeal cooked,oats cooked
+cornmeal cooked,quinoa cooked
+ice cream vanilla,yogurt greek
+ice cream vanilla,yogurt plain
+milk whole,milk skim
+milk whole,almond milk
+milk whole,soy milk
+cheese cheddar,cottage cheese
+cheese cheddar,yogurt greek
+cream cheese,cottage cheese
+cream cheese,yogurt greek
+butter,avocado raw
+pizza cheese,whole wheat pasta cooked
+pizza cheese,quinoa cooked
+burger beef,turkey breast cooked
+burger beef,chicken breast cooked
+hot dog,chicken breast cooked
+hot dog,turkey breast cooked
+fried rice,brown rice cooked
+fried rice,quinoa cooked
+mac and cheese,whole wheat pasta cooked
+mac and cheese,lentils cooked
+pasta carbonara,whole wheat pasta cooked
+lasagna,whole wheat pasta cooked
+lasagna,zucchini cooked
+sushi roll,brown rice cooked
+sushi roll,quinoa cooked
+sandwich turkey,whole wheat bread
+taco,lettuce raw
+taco,tortilla flour
+burrito bean,chickpeas cooked
+burrito bean,lentils cooked
+honey,maple syrup
+honey,berries mixed
+jam strawberry,berries mixed
+jam strawberry,apple raw
+chocolate milk,almond milk
+chocolate milk,soy milk
+dates dried,berries mixed
+dates dried,apple raw
+raisins,berries mixed
+raisins,blueberries raw
+banana raw,apple raw
+banana raw,berries mixed
+grapes raw,berries mixed
+grapes raw,strawberries raw
+mango raw,berries mixed
+pineapple raw,berries mixed
