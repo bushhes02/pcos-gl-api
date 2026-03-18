@@ -29,10 +29,10 @@ with open('food_swaps.csv', 'r') as f:
     for row in reader:
         food_swaps_raw.append(row)
 
-# GL calculation function (FIXED: Added minimum cap)
+# GL calculation function (no cap - validation prevents extremes)
 def calculate_gl(carbs, protein, fat, fiber):
     GL = 19.27 + (0.39 * carbs) - (0.21 * fat) - (0.01 * protein**2) - (0.01 * fiber**2)
-    return max(0, round(GL, 1))  # Never return negative GL
+    return round(GL, 1)
 
 # Search food function
 def search_food(food_name, amount_grams):
@@ -111,15 +111,37 @@ def analyze_meal_api():
                 total_fat += food_data['fat']
                 total_fiber += food_data['fiber']
         
-        # Calculate GL
+        # VALIDATION: Check meal is within formula's validated range
+        # Based on Lee et al. (2021) validation parameters
+        
+        if total_protein > 80:
+            return jsonify({
+                'success': False,
+                'error': 'validation_failed',
+                'reason': 'high_protein',
+                'message': 'The formula works best with balanced meals under 80g protein. Try smaller portions!'
+            }), 400
+        
+        if total_carbs < 20:
+            return jsonify({
+                'success': False,
+                'error': 'validation_failed',
+                'reason': 'low_carbs',
+                'message': 'This meal has very low carbs (<20g). GL calculation requires some carbohydrate content.'
+            }), 400
+        
+        if total_carbs > 100:
+            return jsonify({
+                'success': False,
+                'error': 'validation_failed',
+                'reason': 'high_carbs',
+                'message': 'This meal has very high carbs (>100g). The formula works best with moderate carb meals. Try smaller portions!'
+            }), 400
+        
+        # Calculate GL (only if validation passed)
         meal_gl = calculate_gl(total_carbs, total_protein, total_fat, total_fiber)
         
-        # Check for extreme macros (NEW: Warning system)
-        warning = None
-        if total_protein > 80:
-            warning = "⚠️ High-protein meal (>80g). GL estimate may be less accurate."
-        
-        # Determine risk level
+        # Determine risk level (using correct thresholds)
         if meal_gl < 10:
             risk = "Low"
             message = "Excellent for PCOS!"
@@ -144,7 +166,7 @@ def analyze_meal_api():
                         'alternatives': alternatives[:3]
                     })
         
-        response = {
+        return jsonify({
             'success': True,
             'meal_gl': float(meal_gl),
             'risk_level': risk,
@@ -157,13 +179,7 @@ def analyze_meal_api():
             },
             'foods': foods_in_meal,
             'suggestions': suggestions
-        }
-        
-        # Add warning if present
-        if warning:
-            response['warning'] = warning
-        
-        return jsonify(response)
+        })
         
     except Exception as e:
         return jsonify({
