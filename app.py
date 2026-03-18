@@ -29,10 +29,10 @@ with open('food_swaps.csv', 'r') as f:
     for row in reader:
         food_swaps_raw.append(row)
 
-# GL calculation function
+# GL calculation function (FIXED: Added minimum cap)
 def calculate_gl(carbs, protein, fat, fiber):
     GL = 19.27 + (0.39 * carbs) - (0.21 * fat) - (0.01 * protein**2) - (0.01 * fiber**2)
-    return round(GL, 1)
+    return max(0, round(GL, 1))  # Never return negative GL
 
 # Search food function
 def search_food(food_name, amount_grams):
@@ -111,9 +111,16 @@ def analyze_meal_api():
                 total_fat += food_data['fat']
                 total_fiber += food_data['fiber']
         
+        # Calculate GL
         meal_gl = calculate_gl(total_carbs, total_protein, total_fat, total_fiber)
         
-        if meal_gl < 15:
+        # Check for extreme macros (NEW: Warning system)
+        warning = None
+        if total_protein > 80:
+            warning = "⚠️ High-protein meal (>80g). GL estimate may be less accurate."
+        
+        # Determine risk level
+        if meal_gl < 10:
             risk = "Low"
             message = "Excellent for PCOS!"
         elif meal_gl < 20:
@@ -123,6 +130,7 @@ def analyze_meal_api():
             risk = "High"
             message = "May spike insulin"
         
+        # Find suggestions
         suggestions = []
         for food in foods_in_meal:
             food_gl_val = calculate_gl(food['carbs'], food['protein'], food['fat'], food['fiber'])
@@ -136,7 +144,7 @@ def analyze_meal_api():
                         'alternatives': alternatives[:3]
                     })
         
-        return jsonify({
+        response = {
             'success': True,
             'meal_gl': float(meal_gl),
             'risk_level': risk,
@@ -149,7 +157,13 @@ def analyze_meal_api():
             },
             'foods': foods_in_meal,
             'suggestions': suggestions
-        })
+        }
+        
+        # Add warning if present
+        if warning:
+            response['warning'] = warning
+        
+        return jsonify(response)
         
     except Exception as e:
         return jsonify({
