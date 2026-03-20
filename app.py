@@ -29,7 +29,7 @@ with open('food_swaps.csv', 'r') as f:
     for row in reader:
         food_swaps_raw.append(row)
 
-# GL calculation function (no cap - validation prevents extremes)
+# GL calculation function - Lee et al. (2021) formula
 def calculate_gl(carbs, protein, fat, fiber):
     GL = 19.27 + (0.39 * carbs) - (0.21 * fat) - (0.01 * protein**2) - (0.01 * fiber**2)
     return round(GL, 1)
@@ -111,37 +111,15 @@ def analyze_meal_api():
                 total_fat += food_data['fat']
                 total_fiber += food_data['fiber']
         
-        # VALIDATION: Check meal is within formula's validated range
-        # Based on Lee et al. (2021) validation parameters
-        
-        if total_protein > 80:
-            return jsonify({
-                'success': False,
-                'error': 'validation_failed',
-                'reason': 'high_protein',
-                'message': 'The formula works best with balanced meals under 80g protein. Try smaller portions!'
-            }), 400
-        
-        if total_carbs < 20:
-            return jsonify({
-                'success': False,
-                'error': 'validation_failed',
-                'reason': 'low_carbs',
-                'message': 'This meal has very low carbs (<20g). GL calculation requires some carbohydrate content.'
-            }), 400
-        
-        if total_carbs > 100:
-            return jsonify({
-                'success': False,
-                'error': 'validation_failed',
-                'reason': 'high_carbs',
-                'message': 'This meal has very high carbs (>100g). The formula works best with moderate carb meals. Try smaller portions!'
-            }), 400
-        
-        # Calculate GL (only if validation passed)
+        # NO VALIDATION - Calculate GL for any meal
+        # Lee et al. (2021) formula
         meal_gl = calculate_gl(total_carbs, total_protein, total_fat, total_fiber)
         
-        # Determine risk level (using correct thresholds)
+        # Handle negative GL - display as "< 0" instead of negative number
+        gl_display = meal_gl if meal_gl >= 0 else 0
+        is_negative = meal_gl < 0
+        
+        # Determine risk level (ADA/Harvard thresholds)
         if meal_gl < 10:
             risk = "Low"
             message = "Excellent for PCOS!"
@@ -166,9 +144,10 @@ def analyze_meal_api():
                         'alternatives': alternatives[:3]
                     })
         
-        return jsonify({
+        response_data = {
             'success': True,
-            'meal_gl': float(meal_gl),
+            'meal_gl': float(gl_display),
+            'is_negative_gl': is_negative,
             'risk_level': risk,
             'message': message,
             'total_macros': {
@@ -179,7 +158,9 @@ def analyze_meal_api():
             },
             'foods': foods_in_meal,
             'suggestions': suggestions
-        })
+        }
+        
+        return jsonify(response_data)
         
     except Exception as e:
         return jsonify({
@@ -189,7 +170,11 @@ def analyze_meal_api():
 
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({'status': 'healthy'})
+    return jsonify({
+        'status': 'healthy',
+        'formula': 'Lee et al. (2021)',
+        'validation': 'None - formula applied to all meals'
+    })
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
